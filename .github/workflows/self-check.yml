@@ -1,0 +1,34 @@
+# Dogfooding: run the action against our own schedule every Monday.
+#
+# fail-on-drift is false on purpose. Our contract cannot be changed, so a red
+# badge every week would say nothing new. The point is the step summary, which
+# records what the schedule is doing as the chain's block time keeps moving.
+name: self-check
+
+on:
+  schedule:
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  lcr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: drift
+        uses: ./
+        with:
+          chain: bsc
+          start-block: 16579822
+          period-blocks: 2628000
+          periods: 80
+          max-drift: 5
+          fail-on-drift: false
+      - name: Show the outputs
+        run: |
+          echo "drift        ${{ steps.drift.outputs.drift-percent }}%"
+          echo "within       ${{ steps.drift.outputs.within-tolerance }}"
+          echo "elapsed      ${{ steps.drift.outputs.periods-elapsed }}"
+          echo "expected     ${{ steps.drift.outputs.periods-expected }}"
+          echo "intended end ${{ steps.drift.outputs.intended-end }}"
+          echo "projected    ${{ steps.drift.outputs.projected-end }}"

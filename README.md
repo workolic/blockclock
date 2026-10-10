@@ -1,5 +1,8 @@
 # BlockClock
 
+[![ci](https://github.com/workolic/blockclock/actions/workflows/ci.yml/badge.svg)](https://github.com/workolic/blockclock/actions/workflows/ci.yml)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 **Does your block-count schedule still mean what you think it means?**
 
 A contract that says *"one unlock every 2,628,000 blocks"* is really saying *"one unlock every 91.25 days"* — but only while a block takes 3 seconds. Chains speed up. The contract does not notice. Your documentation does not notice. Your holders notice.
@@ -73,6 +76,8 @@ A *period* is whatever your contract repeats. BlockClock does not read your cont
 
 Exit code 1 means the drift passed your tolerance, so a scheduled job can tell you before a holder does. (2 is a bad argument, 3 is an unreachable endpoint, so a CI failure tells you which went wrong.)
 
+There is a GitHub Action, so a weekly check is six lines:
+
 ```yaml
 # .github/workflows/schedule-drift.yml
 on:
@@ -81,6 +86,23 @@ jobs:
   drift:
     runs-on: ubuntu-latest
     steps:
+      - id: drift
+        uses: workolic/blockclock@v0.1.0
+        with:
+          chain: bsc
+          start-block: 16579822
+          period-blocks: 2628000
+          periods: 80
+          max-drift: 10
+```
+
+The step writes a table into the job summary and fails the job past `max-drift`. Set `fail-on-drift: false` to record the numbers without failing — which is what you want when, like us, the schedule is in a contract you cannot change.
+
+Outputs: `drift-percent`, `within-tolerance`, `periods-elapsed`, `periods-expected`, `intended-end`, `projected-end`, and `report` (the full JSON).
+
+Or call the CLI directly, if you would rather not depend on the Action:
+
+```yaml
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npx github:workolic/blockclock --chain bsc --start-block 16579822

@@ -1,0 +1,167 @@
+name: 'BlockClock schedule drift check'
+description: 'Fail the build when a schedule written in block counts has drifted from the calendar its authors assumed.'
+author: 'Lucrar'
+
+branding:
+  icon: 'clock'
+  color: 'orange'
+
+inputs:
+  chain:
+    description: 'Chain preset: bsc, ethereum, polygon or base. Sets a public RPC and that chain''s historical design block time.'
+    required: false
+    default: ''
+  rpc:
+    description: 'EVM JSON-RPC endpoint. Overrides the chain preset. An old start-block needs an archive node.'
+    required: false
+    default: ''
+  start-block:
+    description: 'The block your schedule counts from.'
+    required: true
+  period-blocks:
+    description: 'Blocks in one period.'
+    required: true
+  periods:
+    description: 'How many periods the schedule has.'
+    required: true
+  design-block-time:
+    description: 'Block time the schedule assumed, in seconds. Defaults to the chain preset.'
+    required: false
+    default: ''
+  sample-blocks:
+    description: 'How far back to measure the current block time. Default 100000.'
+    required: false
+    default: ''
+  max-drift:
+    description: 'Fail past this percentage of drift. Drift is symmetric, so one threshold catches both directions.'
+    required: false
+    default: '5'
+  fail-on-drift:
+    description: 'Set to false to report the drift without failing the job.'
+    required: false
+    default: 'true'
+
+outputs:
+  drift-percent:
+    description: 'Signed drift. +100 means a period now takes half as long as designed, -100 means twice as long.'
+    value: ${{ steps.run.outputs.drift-percent }}
+  within-tolerance:
+    description: 'true when the absolute drift is within max-drift.'
+    value: ${{ steps.run.outputs.within-tolerance }}
+  periods-elapsed:
+    description: 'Periods the block counter has actually passed.'
+    value: ${{ steps.run.outputs.periods-elapsed }}
+  periods-expected:
+    description: 'Periods the design clock expected by now.'
+    value: ${{ steps.run.outputs.periods-expected }}
+  intended-end:
+    description: 'Date the schedule was meant to end (YYYY-MM-DD), or empty if it falls off the calendar.'
+    value: ${{ steps.run.outputs.intended-end }}
+  projected-end:
+    description: 'Date it now ends at the current pace (YYYY-MM-DD).'
+    value: ${{ steps.run.outputs.projected-end }}
+  report:
+    description: 'The full report as JSON.'
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run blockclock
+      id: run
+      shell: bash
+      env:
+        IN_CHAIN: ${{ inputs.chain }}
+        IN_RPC: ${{ inputs.rpc }}
+        IN_START_BLOCK: ${{ inputs.start-block }}
+        IN_PERIOD_BLOCKS: ${{ inputs.period-blocks }}
+        IN_PERIODS: ${{ inputs.periods }}
+        IN_DESIGN_BLOCK_TIME: ${{ inputs.design-block-time }}
+        IN_SAMPLE_BLOCKS: ${{ inputs.sample-blocks }}
+        IN_MAX_DRIFT: ${{ inputs.max-drift }}
+        IN_FAIL_ON_DRIFT: ${{ inputs.fail-on-drift }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set +e
+        set -u
+
+        args=(--start-block "$IN_START_BLOCK" --period-blocks "$IN_PERIOD_BLOCKS" --periods "$IN_PERIODS")
+        if [ -n "$IN_CHAIN" ];             then args+=(--chain "$IN_CHAIN"); fi
+        if [ -n "$IN_RPC" ];               then args+=(--rpc "$IN_RPC"); fi
+        if [ -n "$IN_DESIGN_BLOCK_TIME" ]; then args+=(--design-block-time "$IN_DESIGN_BLOCK_TIME"); fi
+        if [ -n "$IN_SAMPLE_BLOCKS" ];     then args+=(--sample-blocks "$IN_SAMPLE_BLOCKS"); fi
+        if [ -n "$IN_MAX_DRIFT" ];         then args+=(--max-drift "$IN_MAX_DRIFT"); fi
+
+        # One invocation, so the log, the outputs and the summary can never
+        # disagree with each other.
+        json=$(node "$ACTION_PATH/bin/blockclock.js" "${args[@]}" --json 2>blockclock.err)
+        status=$?
+
+        # Exit 2 is a bad argument, 3 is an unreachable endpoint. Neither is a
+        # drift finding, so fail-on-drift must not silence them.
+        if [ "$status" -ge 2 ]; then
+          cat blockclock.err >&2
+          echo "::error::blockclock could not run (exit $status)."
+          exit "$status"
+        fi
+
+        node -e '
+          const fs = require("fs");
+          const r = JSON.parse(fs.readFileSync(0, "utf8"));
+          const day = (v) => (v ? String(v).slice(0, 10) : "");
+          const rows = {
+            "drift-percent": r.driftPercent.toFixed(4),
+            "within-tolerance": String(r.withinTolerance),
+            "periods-elapsed": String(r.periodsElapsed),
+            "periods-expected": String(r.periodsExpectedByNow),
+            "intended-end": day(r.intendedEndIso),
+            "projected-end": day(r.projectedEndIso),
+          };
+          let out = Object.entries(rows).map(([k, v]) => `${k}=${v}`).join("\n") + "\n";
+          out += "report<<BLOCKCLOCK_JSON\n" + JSON.stringify(r) + "\nBLOCKCLOCK_JSON\n";
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, out);
+
+          const pace = r.pace === "on plan"
+            ? "exactly as designed"
+            : `${r.paceFactor.toFixed(2)}x ${r.pace} than designed`;
+          const summary = [
+            "### BlockClock",
+            "",
+            `Periods run **${pace}**.`,
+            "",
+            "| | |",
+            "|---|---|",
+            `| Drift | ${r.driftPercent.toFixed(1)}% (allowed ${r.maxDriftPercent}%) |`,
+            `| Block time | design ${r.designSecondsPerBlock}s, now ${r.observedSecondsPerBlock.toFixed(3)}s |`,
+            `| Periods elapsed | ${r.periodsElapsed} of ${r.periods} |`,
+            `| Expected by now | ${r.periodsExpectedByNow} |`,
+            `| Intended end | ${day(r.intendedEndIso) || "off the calendar"} |`,
+            `| Projected end | ${day(r.projectedEndIso) || "off the calendar"} |`,
+            "",
+          ].join("\n");
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+
+          const pad = (k) => (k + " ".repeat(18)).slice(0, 18);
+          process.stdout.write([
+            "",
+            "  " + pad("Drift") + `${r.driftPercent.toFixed(1)}%  (allowed ${r.maxDriftPercent}%)`,
+            "  " + pad("Pace") + `periods run ${pace}`,
+            "  " + pad("Block time") + `design ${r.designSecondsPerBlock}s, now ${r.observedSecondsPerBlock.toFixed(3)}s`,
+            "  " + pad("Periods") + `${r.periodsElapsed} of ${r.periods} elapsed, ${r.periodsExpectedByNow} expected by now`,
+            "  " + pad("Intended end") + (day(r.intendedEndIso) || "off the calendar"),
+            "  " + pad("Projected end") + (day(r.projectedEndIso) || "off the calendar"),
+            "",
+          ].join("\n"));
+        ' <<< "$json"
+        parse_status=$?
+
+        if [ "$parse_status" -ne 0 ]; then
+          echo "::error::blockclock ran but its report could not be read."
+          exit 2
+        fi
+
+        if [ "$status" -eq 1 ] && [ "$IN_FAIL_ON_DRIFT" != "false" ]; then
+          echo "::error::Drift exceeds the ${IN_MAX_DRIFT}% allowed. The calendar your contract actually runs on is not the one in your documentation."
+          exit 1
+        fi
+        exit 0
