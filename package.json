@@ -1,0 +1,48 @@
+{
+  "name": "blockclock",
+  "version": "0.1.0",
+  "description": "Check whether a schedule written in block counts still lands where its authors thought it would.",
+  "type": "module",
+  "license": "MIT",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "blockclock": "bin/blockclock.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "blockchain",
+    "block-time",
+    "vesting",
+    "unlock-schedule",
+    "tokenomics",
+    "bnb-chain",
+    "ethereum",
+    "evm",
+    "audit"
+  ],
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workolic/blockclock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/workolic/blockclock/issues"
+  },
+  "homepage": "https://github.com/workolic/blockclock#readme"
+}
