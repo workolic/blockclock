@@ -103,7 +103,7 @@ Outputs: `drift-percent`, `within-tolerance`, `periods-elapsed`, `periods-expect
 Or call the CLI directly, if you would rather not depend on the Action:
 
 ```yaml
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: 20 }
       - run: npx github:workolic/blockclock --chain bsc --start-block 16579822
                --period-blocks 2628000 --periods 80 --max-drift 10
