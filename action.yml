@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Cripteracia Unipessoal Lda
+# SPDX-License-Identifier: MIT
+
 name: 'BlockClock schedule drift check'
 description: 'Fail the build when a schedule written in block counts has drifted from the calendar its authors assumed.'
 author: 'Lucrar'

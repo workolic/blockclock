@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Cripteracia Unipessoal Lda
+// SPDX-License-Identifier: MIT
+
 /**
  * BlockClock — tell whether a schedule written in block counts still lands
  * where its authors thought it would.

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Cripteracia Unipessoal Lda
+# SPDX-License-Identifier: MIT
+
 # Dogfooding: run the action against our own schedule every Monday.
 #
 # fail-on-drift is false on purpose. Our contract cannot be changed, so a red

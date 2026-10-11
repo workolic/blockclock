@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Cripteracia Unipessoal Lda
+// SPDX-License-Identifier: MIT
+
 /**
  * Minimal JSON-RPC client. No dependencies: Node 18+ has global fetch.
  */

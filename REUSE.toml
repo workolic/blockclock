@@ -1,0 +1,11 @@
+version = 1
+SPDX-PackageName = "blockclock"
+SPDX-PackageSupplier = "Cripteracia Unipessoal Lda <workolic@lucrar.pt>"
+SPDX-PackageDownloadLocation = "https://github.com/workolic/blockclock"
+
+# Files that carry no comment syntax, or where a header would be noise.
+[[annotations]]
+path = ["README.md", "examples/lucrar.md", "package.json", ".gitignore", "LICENSE", "REUSE.toml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Cripteracia Unipessoal Lda"
+SPDX-License-Identifier = "MIT"

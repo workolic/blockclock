@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-FileCopyrightText: 2026 Cripteracia Unipessoal Lda
+// SPDX-License-Identifier: MIT
 /**
  * blockclock — check whether a block-denominated schedule still lands where
  * its authors thought it would.
