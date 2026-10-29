@@ -1,0 +1,128 @@
+{
+  "version": "v1.0.0",
+  "entity": {
+    "type": "organisation",
+    "role": "owner",
+    "name": "Cripteracia Unipessoal Lda",
+    "email": "workolic@lucrar.pt",
+    "phone": "",
+    "description": "A one-person company in Setubal, Portugal. We maintain BlockClock, an MIT-licensed tool that checks whether a schedule written in block counts still means what its authors intended. We found the problem in our own deployed contract and published it rather than quietly amending our documentation.",
+    "webpageUrl": {
+      "url": "https://github.com/workolic/blockclock",
+      "wellKnown": "https://github.com/workolic/blockclock/blob/main/.well-known/funding-manifest-urls"
+    }
+  },
+  "projects": [
+    {
+      "guid": "blockclock",
+      "name": "BlockClock",
+      "description": "A library, CLI and GitHub Action that detects schedules whose units changed meaning. Software often expresses a duration as a count of events - blocks, frames, timer ticks - and the number is only correct under the event rate that was true when it was written. That assumption is recorded nowhere a compiler, linter or auditor can read. BlockClock takes a start block, a period length, a period count and the seconds-per-block the author assumed, measures the rate actually observed over a recent window, and reports a signed drift and a projected end date. Node 18+, zero dependencies, 23 tests, presets for BNB Chain, Ethereum, Polygon and Base. The motivating case is measured, not hypothetical: a schedule of 80 periods of 2,628,000 blocks written in 2022 at 3-second blocks, documented to end in 2042, now completes around March 2028 because BNB Chain's block time fell to about 0.45 seconds in three discrete protocol upgrades.",
+      "webpageUrl": {
+        "url": "https://github.com/workolic/blockclock",
+        "wellKnown": "https://github.com/workolic/blockclock/blob/main/.well-known/funding-manifest-urls"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/workolic/blockclock",
+        "wellKnown": "https://github.com/workolic/blockclock/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": [
+        "spdx:MIT"
+      ],
+      "tags": [
+        "developer-tools",
+        "static-analysis",
+        "monitoring",
+        "blockchain",
+        "cli",
+        "github-action",
+        "nodejs",
+        "software-correctness"
+      ]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "contact",
+        "type": "other",
+        "address": "workolic@lucrar.pt",
+        "description": "Write to us and we will agree a transfer method. We do not publish bank details in this file."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "contract-reader",
+        "status": "active",
+        "name": "Read the three numbers out of contracts automatically",
+        "description": "Today a user has to find the start block, the period length and the period count by hand and pass them on the command line, which is the single biggest barrier to anyone checking their own contract. This plan funds extracting those values from the common vesting and timelock patterns, with the tool saying plainly when it cannot tell rather than guessing. Estimated 15 days.",
+        "amount": 3750,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "contact"
+        ]
+      },
+      {
+        "guid": "historical-series",
+        "status": "active",
+        "name": "Historical block-time series per chain",
+        "description": "Drift measured from the start of a schedule is currently an average, which hides step changes. This plan funds a per-chain historical series so the whole life of a schedule can be drawn instead of averaged, plus one year of archive-node access, which is required because public endpoints discard old blocks. Estimated 8 days plus hosting.",
+        "amount": 2500,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "contact"
+        ]
+      },
+      {
+        "guid": "chain-presets",
+        "status": "active",
+        "name": "More chain presets, each with a documented source",
+        "description": "Design block time is a historical judgement, not an API fact. Every preset needs a cited source and periodic review. This plan funds additional chains on that standard. Estimated 4 days.",
+        "amount": 1000,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "contact"
+        ]
+      },
+      {
+        "guid": "web-check",
+        "status": "active",
+        "name": "Documentation and a web page that runs the check without installing anything",
+        "description": "Most of the people who should run this check will not install a CLI. This plan funds a page that performs the same calculation in the browser, plus the documentation to go with it. Estimated 6 days.",
+        "amount": 1500,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "contact"
+        ]
+      },
+      {
+        "guid": "maintenance-year",
+        "status": "active",
+        "name": "One year of tests, releases and maintenance",
+        "description": "Chains keep changing their block times, which is the whole point of the tool, so the presets and the measurement code have to keep up. This plan funds a year of that work. Estimated 7 days spread over the year.",
+        "amount": 1750,
+        "currency": "EUR",
+        "frequency": "yearly",
+        "channels": [
+          "contact"
+        ]
+      },
+      {
+        "guid": "everything",
+        "status": "active",
+        "name": "All of the above",
+        "description": "The four one-off plans plus the first year of maintenance: 40 days at 250 EUR per day, plus 500 EUR of archive-node access.",
+        "amount": 10500,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "contact"
+        ]
+      }
+    ],
+    "history": []
+  }
+}
