@@ -5,7 +5,7 @@ SPDX-PackageDownloadLocation = "https://github.com/workolic/blockclock"
 
 # Files that carry no comment syntax, or where a header would be noise.
 [[annotations]]
-path = ["README.md", "examples/lucrar.md", "package.json", ".gitignore", "LICENSE", "REUSE.toml"]
+path = ["README.md", "examples/lucrar.md", "package.json", ".gitignore", "LICENSE", "REUSE.toml", "funding.json", ".well-known/funding-manifest-urls"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Cripteracia Unipessoal Lda"
 SPDX-License-Identifier = "MIT"
