@@ -95,13 +95,17 @@ export async function measureBlockTime(rpcUrl, options = {}) {
 
 /** The input checks that do not need a current block; shared with checkSchedule. */
 function assertScheduleShape({ startBlock, periodBlocks, periods, designSecondsPerBlock }) {
-  if (!Number.isInteger(startBlock) || startBlock < 0) {
+  if (!Number.isSafeInteger(startBlock) || startBlock < 0) {
     throw new RangeError(`startBlock must be a non-negative integer (got ${startBlock})`);
   }
   for (const [name, value] of Object.entries({ periodBlocks, periods })) {
-    if (!Number.isInteger(value) || value <= 0) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
       throw new RangeError(`${name} must be a positive integer (got ${value})`);
     }
+  }
+  const totalBlocks = periodBlocks * periods;
+  if (!Number.isSafeInteger(totalBlocks) || !Number.isSafeInteger(startBlock + totalBlocks)) {
+    throw new RangeError('schedule block counts and end block must stay within the safe integer range');
   }
   if (!Number.isFinite(designSecondsPerBlock) || designSecondsPerBlock <= 0) {
     throw new RangeError(
@@ -138,9 +142,11 @@ export function projectSchedule(schedule) {
     endBlockTimestamp,
   } = schedule;
 
+  assertScheduleShape({ startBlock, periodBlocks, periods, designSecondsPerBlock });
+
   // Block numbers and timestamps may be zero (genesis). Rates and counts may not.
   for (const [name, value] of Object.entries({ startBlock, currentBlock })) {
-    if (!Number.isInteger(value) || value < 0) {
+    if (!Number.isSafeInteger(value) || value < 0) {
       throw new RangeError(`${name} must be a non-negative integer (got ${value})`);
     }
   }
@@ -150,7 +156,7 @@ export function projectSchedule(schedule) {
     }
   }
   for (const [name, value] of Object.entries({ periodBlocks, periods })) {
-    if (!Number.isInteger(value) || value <= 0) {
+    if (!Number.isSafeInteger(value) || value <= 0) {
       throw new RangeError(`${name} must be a positive integer (got ${value})`);
     }
   }
