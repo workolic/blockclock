@@ -145,28 +145,18 @@ export function projectSchedule(schedule) {
   assertScheduleShape({ startBlock, periodBlocks, periods, designSecondsPerBlock });
 
   // Block numbers and timestamps may be zero (genesis). Rates and counts may not.
-  for (const [name, value] of Object.entries({ startBlock, currentBlock })) {
-    if (!Number.isSafeInteger(value) || value < 0) {
-      throw new RangeError(`${name} must be a non-negative integer (got ${value})`);
-    }
+  if (!Number.isSafeInteger(currentBlock) || currentBlock < 0) {
+    throw new RangeError(`currentBlock must be a non-negative integer (got ${currentBlock})`);
   }
   for (const [name, value] of Object.entries({ startTimestamp, currentTimestamp })) {
     if (!Number.isFinite(value) || value < 0) {
       throw new RangeError(`${name} must be a non-negative number (got ${value})`);
     }
   }
-  for (const [name, value] of Object.entries({ periodBlocks, periods })) {
-    if (!Number.isSafeInteger(value) || value <= 0) {
-      throw new RangeError(`${name} must be a positive integer (got ${value})`);
-    }
-  }
-  for (const [name, value] of Object.entries({
-    designSecondsPerBlock,
-    observedSecondsPerBlock,
-  })) {
-    if (!Number.isFinite(value) || value <= 0) {
-      throw new RangeError(`${name} must be a positive finite number (got ${value})`);
-    }
+  if (!Number.isFinite(observedSecondsPerBlock) || observedSecondsPerBlock <= 0) {
+    throw new RangeError(
+      `observedSecondsPerBlock must be a positive finite number (got ${observedSecondsPerBlock})`,
+    );
   }
   if (currentBlock < startBlock) {
     throw new RangeError('currentBlock is before startBlock: the schedule has not started');
