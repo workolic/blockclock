@@ -185,7 +185,19 @@ export function projectSchedule(schedule) {
   // Periods. The uncapped counts keep the drift signal alive after the
   // schedule ends; the capped ones are what you would print next to "of N".
   const periodsElapsedUncapped = Math.floor(blocksSoFar / periodBlocks);
-  const periodsExpectedUncapped = Math.floor(secondsSoFar / intendedPeriodSeconds);
+  let periodsExpectedUncapped = Math.floor(secondsSoFar / intendedPeriodSeconds);
+  // A rounded period duration can put the quotient on either side of a boundary.
+  // Check adjacent deadlines using the same start + total blocks * rate
+  // calculation as intendedEnd, so unfinished periods are not counted.
+  const nextPeriodEnd = startTimestamp
+    + (periodsExpectedUncapped + 1) * periodBlocks * designSecondsPerBlock;
+  const currentPeriodEnd = startTimestamp
+    + periodsExpectedUncapped * periodBlocks * designSecondsPerBlock;
+  if (currentTimestamp >= nextPeriodEnd) {
+    periodsExpectedUncapped += 1;
+  } else if (currentTimestamp < currentPeriodEnd) {
+    periodsExpectedUncapped -= 1;
+  }
   const periodsElapsed = Math.min(periods, periodsElapsedUncapped);
   const periodsExpectedByNow = Math.min(periods, periodsExpectedUncapped);
 
