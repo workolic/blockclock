@@ -65,7 +65,7 @@ export async function rpcCall(url, method, params = [], opts = {}) {
           { url, method },
         );
       }
-      if (!body || !('result' in body)) {
+      if (!body || typeof body !== 'object' || !('result' in body)) {
         throw new RpcShapeError(`${method}: response had no result field`, { url, method });
       }
       return body.result;
