@@ -85,7 +85,9 @@ function parseArgs(argv) {
       continue;
     }
     const value = argv[++i];
-    if (value === undefined) throw new UsageError(`--${key} needs a value`);
+    if (value === undefined || value.startsWith('--')) {
+      throw new UsageError(`--${key} needs a value`);
+    }
     out[key] = value;
   }
   return out;
