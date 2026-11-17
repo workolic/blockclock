@@ -1,6 +1,6 @@
 {
   "name": "blockclock",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Check whether a schedule written in block counts still lands where its authors thought it would.",
   "type": "module",
   "license": "MIT",
@@ -14,6 +14,7 @@
   "files": [
     "src",
     "bin",
+    "data",
     "examples",
     "README.md",
     "LICENSE"
@@ -33,7 +34,9 @@
     "bnb-chain",
     "ethereum",
     "evm",
-    "audit"
+    "audit",
+    "solidity",
+    "static-analysis"
   ],
   "dependencies": {},
   "devDependencies": {},

@@ -70,7 +70,7 @@ blockclock \
 | `--max-drift <pct>` | exit non-zero past this (default 5). Drift is symmetric: `+100` means a period now takes half as long as designed, `-100` means twice as long, so one threshold catches both directions |
 | `--json` | machine-readable output |
 
-A *period* is whatever your contract repeats. BlockClock does not read your contract — you give it the three numbers, it tells you where they now point. That keeps it useful whatever your contract looks like.
+A *period* is whatever your contract repeats. You give this command the three numbers, it tells you where they now point. That keeps it useful whatever your contract looks like. To find the numbers in a contract you did not write, see [Scan a contract](#scan-a-contract).
 
 ### In CI
 
@@ -130,6 +130,85 @@ console.log(report.periodsAhead);  // 23
 
 `projectSchedule()` is pure arithmetic and touches no network, so you can run it against your own historical data or in a test.
 
+## Scan a contract
+
+New in 0.2. `blockclock scan` reads Solidity source and lists every place the contract tells time in blocks, with what each block count meant when it was written and what it means today.
+
+```
+$ npx github:workolic/blockclock scan 0x1510211E6DC81F5724A1BecA33C5AC70Dcca6CE0 --chain bsc
+
+blockclock scan: 0x1510211E6DC81F5724A1BecA33C5AC70Dcca6CE0
+
+  block time now       0.45s  (newest known rate)
+  assumed when written 3s  (unless the contract says otherwise)
+  files read           1
+
+  BLOCK TIME WRITTEN INTO THE CONTRACT
+    LCRtoken.sol:549  intervalBlocksYear = 10,512,000 blocks
+        written as  1 year  (at 3s per block)
+        today       55 days  (at 0.45s per block)
+        > intervalBlocksYear = 365 * 24 * 60 * 60 / 3;  // 1 year of blocks (1 each 3 seconds)
+
+  BLOCK COUNTS
+    LCRtoken.sol:550  intervalBlocksQuarter = 2,628,000 blocks
+        written as  3 months  (at 3s per block)
+        today       14 days  (at 0.45s per block)
+        > intervalBlocksQuarter = intervalBlocksYear / 4;  // 1 quarter of blocks
+
+  block.number USED AS A CLOCK
+    LCRtoken.sol:547  1,677,600 blocks
+        written as  58 days  (at 3s per block)
+        today       9 days  (at 0.45s per block)
+        > uint256 startBlock = block.number + ((daysUntilFirstRelease * 24 + hoursUntilMidnight) * 60 * 60 / 3); // April 1, 2022 aprox.
+    LCRtoken.sol:610
+        > require  (releasePeriods[0] <= block.number, "before release period");
+    LCRtoken.sol:611
+        > require  (block.number < releasePeriods[80] , "after release period");
+    LCRtoken.sol:619
+        > if (block.number >= releasePeriods[i] && block.number < releasePeriods[i+1])
+
+  6 places where this contract counts time in blocks.
+  Each one moves when the chain changes its block time. Check them against
+  what the contract was meant to do, then run `blockclock` on the schedule.
+```
+
+That is our own token, read from its verified source. Line 549 is the whole story: the author (us) divided a year of seconds by 3 and stored the result as a number of blocks.
+
+```bash
+blockclock scan contracts/              # a file or a directory of .sol files
+blockclock scan 0xAddress --chain bsc   # verified source, fetched from Sourcify (no API key)
+blockclock scan contracts/ --measure    # measure the block time now instead of using the table
+blockclock scan contracts/ --json
+```
+
+| Finding | What it is |
+|---|---|
+| block time written into the contract | seconds divided by a small literal, such as `365 days / 3`. The divisor is the block time the author assumed, so the scan uses it instead of the default |
+| block counts | a value whose name says it counts blocks (`BLOCKS_PER_DAY`, `intervalBlocksQuarter`) and that resolves to a number |
+| amounts per block | a constant named as an amount per block (`REWARD_PER_BLOCK`). The number is unchanged; the amount per day is not |
+| `block.number` used as a clock | `block.number` compared with, or added to, something. When it is added to a constant, the constant is priced |
+| `block.number` stored | `x = block.number`. Harmless alone; it is where schedules start |
+| past-block lookups | `require(blockNumber < block.number)`, as vote checkpoints do. Listed, never counted |
+
+Exit code 1 means the contract counts time in blocks, 0 means it does not, 2 is a bad argument and 3 is a source that could not be fetched. So `blockclock scan contracts/` in CI fails the day someone adds a block-count schedule.
+
+**This is a text scan.** It does not compile or execute anything. It resolves constants it can follow within one file and gives up on the rest, it will flag reward-per-block maths that is working as designed, and it cannot see a schedule passed in through a constructor argument. Read it as a list of places to look, made by something that does not get bored.
+
+An address only works when the source is verified on Sourcify. Otherwise download the source from the block explorer and scan the file.
+
+### Block-time history as data
+
+[`data/block-time-history.json`](data/block-time-history.json) is the table the scan uses: for each chain, the block at which the measured rate changed and the rate from then on. For BNB Smart Chain that is 3s from launch, 1.5s from about block 48,774,000, 0.75s from about 52,340,000 and 0.45s from about 75,142,000. Boundaries are measurements rounded to the nearest thousand blocks, good to a few minutes of wall-clock time.
+
+```js
+import { secondsBetweenBlocks, secondsPerBlockAt } from 'blockclock';
+
+secondsPerBlockAt('bsc', 50_000_000);                      // 1.5
+secondsBetweenBlocks('bsc', 16_579_822, 226_819_822);      // the whole schedule above, in seconds
+```
+
+Priced from that table alone, with no network, the schedule at the top of this page ends in March 2028. The live measurement says the same.
+
 ## What the numbers mean
 
 | | |
@@ -146,7 +225,7 @@ The projected end assumes the chain holds its current pace. It will not, exactly
 
 ## What it does not do
 
-- It does not read your contract. Give it the numbers.
+- The drift check does not read your contract: give it the three numbers. `blockclock scan` will find the lines they come from, but it reads text and does not execute anything.
 - It does not know about pauses, admin overrides, or periods that need a transaction to claim. If a period is a *window* that expires rather than a balance that accrues, a fast chain does not just move your dates — it can close windows nobody reached in time. BlockClock will show you the count; what that means is yours to work out.
 - It does not predict future block times. Nobody can.
 - It reads one average over `--sample-blocks`. If the chain changed pace inside that window, you get the mixture. Shorten the window when you need "now" rather than "lately" — but not too far: block timestamps are whole seconds, so a window spanning only a few of them is mostly rounding. BlockClock says so when the reading has gone coarse, and refuses outright when the window spans no time at all.
@@ -156,8 +235,9 @@ The projected end assumes the chain holds its current pace. It will not, exactly
 Issues and pull requests welcome, particularly:
 
 - more chain presets, with a source for the design block time
-- a reader for common vesting contracts, so the three numbers can be pulled rather than typed
-- historical block-time series, so "since start" can be drawn rather than averaged
+- a reader that pulls the start block and period count out of deployed storage, so the scan can hand its findings straight to the drift check
+- block-time history for more chains, with the measurement that backs each boundary
+- contracts the scan gets wrong, in either direction, as test fixtures
 
 ## Licence
 
