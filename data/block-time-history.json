@@ -1,0 +1,32 @@
+{
+  "bsc": {
+    "chainId": 56,
+    "name": "BNB Smart Chain",
+    "plateaus": [
+      {
+        "fromBlock": 0,
+        "secondsPerBlock": 3,
+        "since": "2020-09",
+        "note": "launch"
+      },
+      {
+        "fromBlock": 48774000,
+        "secondsPerBlock": 1.5,
+        "since": "2025-04",
+        "note": "Lorentz"
+      },
+      {
+        "fromBlock": 52340000,
+        "secondsPerBlock": 0.75,
+        "since": "2025-06",
+        "note": "Maxwell"
+      },
+      {
+        "fromBlock": 75142000,
+        "secondsPerBlock": 0.45,
+        "since": "2026-01",
+        "note": "measured average"
+      }
+    ]
+  }
+}
