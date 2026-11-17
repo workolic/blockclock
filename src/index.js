@@ -14,6 +14,13 @@
 import { getBlock } from './rpc.js';
 
 export { RpcError, RpcShapeError, BlockNotFoundError, getBlock, getBlockNumber } from './rpc.js';
+export {
+  BLOCK_TIME_HISTORY, plateauAt, secondsPerBlockAt, latestSecondsPerBlock, secondsBetweenBlocks,
+} from './history.js';
+export {
+  scanSource, evaluateConstant, blankCommentsAndStrings, fetchVerifiedSources,
+  SCHEDULE_KINDS, CHAIN_IDS,
+} from './scan.js';
 
 const SECONDS_PER_DAY = 86400;
 const DAYS_PER_YEAR = 365.25;
