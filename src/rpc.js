@@ -121,8 +121,15 @@ export async function getBlock(url, blockNumber, opts) {
   if (block === null || block === undefined) {
     throw new BlockNotFoundError(`block ${blockNumber} not found`, { url, method });
   }
+  const number = quantity(block.number, { url, method, what: `block ${blockNumber} number` });
+  // A concrete block request must not silently use another header's timestamp.
+  // Named tags such as 'latest' have no predetermined height to compare.
+  if (typeof tag === 'string' && /^0x[0-9a-fA-F]+$/.test(tag)
+      && BigInt(tag) !== BigInt(number)) {
+    throw new RpcShapeError(`block ${blockNumber}: node returned block ${number}`, { url, method });
+  }
   return {
-    number: quantity(block.number, { url, method, what: `block ${blockNumber} number` }),
+    number,
     timestamp: quantity(block.timestamp, { url, method, what: `block ${blockNumber} timestamp` }),
   };
 }
