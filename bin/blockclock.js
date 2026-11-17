@@ -16,6 +16,7 @@ import {
   checkSchedule, humanDuration, isoDate, isoDateTime,
   RpcShapeError, BlockNotFoundError,
 } from '../src/index.js';
+import { scanMain } from '../src/scan-cli.js';
 
 /**
  * Design block times are the value a schedule's author would have assumed when
@@ -46,6 +47,7 @@ blockclock — does your block-count schedule still mean what you think?
 
 Usage:
   blockclock --chain bsc --start-block 16579822 --period-blocks 2628000 --periods 80
+  blockclock scan <file.sol | directory | 0xAddress>     (see blockclock scan --help)
 
 Options:
   --chain <name>           ${Object.keys(PRESETS).join(', ')}
@@ -163,6 +165,11 @@ function render(report, maxDrift) {
 }
 
 async function main() {
+  if (process.argv[2] === 'scan') {
+    await scanMain(process.argv.slice(3));
+    return;
+  }
+
   let args;
   try {
     args = parseArgs(process.argv.slice(2));
